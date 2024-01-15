@@ -2,119 +2,60 @@ package org.example;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class DrawAndMoveRectanglesPanel extends JPanel {
+
+/*
+    Prostokaty opadajace reaguja na myszke, kiedy wcisniemy przycisk do zmiany stanu canvy
+ */
+public class MyPanel extends JPanel implements MouseListener, MouseMotionListener {
     private Rectangle currentRectangle;
-    private Rectangle movingRectangle;
     private boolean drawingMode;
-    private java.util.List<Rectangle> rectangles = new java.util.ArrayList<>();
-    private int offsetX;
-    private int offsetY;
+    private List<Rectangle> rectangles;
 
-    public DrawAndMoveRectanglesPanel() {
+    public MyPanel() {
         currentRectangle = new Rectangle();
-        movingRectangle = null;
         drawingMode = true;
+        rectangles = new ArrayList<>();
 
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-
-                if (drawingMode) {
-                    currentRectangle.x = e.getX();
-                    currentRectangle.y = e.getY();
-                    offsetX = e.getX() - currentRectangle.x;
-                    offsetY = e.getY() - currentRectangle.y;
-                } else {
-                    for (Rectangle rectangle : rectangles) {
-                        if (rectangle.contains(e.getPoint())) {
-                            movingRectangle = rectangle;
-
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (drawingMode) {
-                    int width = e.getX() - currentRectangle.x;
-                    int height = e.getY() - currentRectangle.y;
-                    rectangles.add(new Rectangle(currentRectangle.x, currentRectangle.y, width, height));
-                    currentRectangle.setBounds(0, 0, 0, 0);  // Reset the current rectangle
-                } else {
-                    movingRectangle = null;
-                }
-                repaint();
-            }
-        });
-
-        addMouseMotionListener(new MouseAdapter() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-
-                if (drawingMode) {
-                    int width = e.getX() - currentRectangle.x;
-                    int height = e.getY() - currentRectangle.y;
-                    currentRectangle.setSize(width, height);
-                    repaint();
-                } else if (movingRectangle != null) {
-                    movingRectangle.x = e.getX() - offsetX - movingRectangle.width /2;;
-                    movingRectangle.y = e.getY() - offsetY - movingRectangle.height/2;;
-                    checkBounds();
-                    repaint();
-                }
-            }
-        });
+        addMouseListener(this);
+        addMouseMotionListener(this);
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Draw and Move Rectangles Panel");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(400, 300);
 
-            DrawAndMoveRectanglesPanel panel = new DrawAndMoveRectanglesPanel();
-            frame.add(panel, BorderLayout.CENTER);
+    private void moveRectangle() {
 
-            JButton toggleModeButton = new JButton("Toggle Mode");
-            toggleModeButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    panel.toggleMode();
-                }
-            });
-            frame.add(toggleModeButton, BorderLayout.SOUTH);
-
-            frame.setVisible(true);
-        });
+        for (Rectangle rectangle : rectangles) {
+            rectangle.y = rectangle.y + 20;
+            checkBounds();
+            repaint();
+        }
     }
 
     private void checkBounds() {
-        // Adjust the bounds checking logic as needed
-        if (movingRectangle != null) {
-            if (movingRectangle.x < 0) {
-                movingRectangle.x = 0;
+        for (Rectangle rectangle : rectangles) {
+            if (rectangle.x < 0) {
+                rectangle.x = 0;
             }
-            if (movingRectangle.x + movingRectangle.width > getWidth()) {
-                movingRectangle.x = getWidth() - movingRectangle.width;
+            if (rectangle.x + rectangle.width > getWidth()) {
+                rectangle.x = getWidth() - rectangle.width;
             }
-            if (movingRectangle.y < 0) {
-                movingRectangle.y = 0;
+            if (rectangle.y < 0) {
+                rectangle.y = 0;
             }
-            if (movingRectangle.y + movingRectangle.height > getHeight()) {
-                movingRectangle.y = getHeight() - movingRectangle.height;
+            if (rectangle.y + rectangle.height > getHeight()) {
+                rectangle.y = getHeight() - rectangle.height;
             }
         }
+
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+
         Graphics2D g2d = (Graphics2D) g;
         g2d.setColor(Color.BLUE);
         for (Rectangle rectangle : rectangles) {
@@ -130,4 +71,60 @@ public class DrawAndMoveRectanglesPanel extends JPanel {
     public void toggleMode() {
         drawingMode = !drawingMode;
     }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        if (drawingMode) {
+            currentRectangle.x = e.getX();
+            currentRectangle.y = e.getY();
+
+        } else {
+            moveRectangle();
+
+
+        }
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        if (drawingMode) {
+            int width = e.getX() - currentRectangle.x;
+            int height = e.getY() - currentRectangle.y;
+            rectangles.add(new Rectangle(currentRectangle.x, currentRectangle.y, width, height));
+            currentRectangle.setBounds(0, 0, 0, 0);
+        }
+        repaint();
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        if (drawingMode) {
+            int width = e.getX() - currentRectangle.x;
+            int height = e.getY() - currentRectangle.y;
+            currentRectangle.setSize(width, height);
+            repaint();
+        }
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+
+    }
+
+
 }
